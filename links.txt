@@ -11,3 +11,7 @@ https://formik.org/docs/guides/form-submission
 
 Chakra ui Color Mode
 https://chakra-ui.com/docs/styled-system/features/color-mode#updating-the-theme-config
+
+Using files from web applications
+https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications#using_a_label_element_to_trigger_a_hidden_file_input_element
+
