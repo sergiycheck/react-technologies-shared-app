@@ -6,10 +6,11 @@ import { PublicFile, User } from '../types';
 import { Button, Fade, Image, Stack } from '@chakra-ui/react';
 import AddUser from './addUser';
 import { BeatLoader } from 'react-spinners';
+import { usersUrl } from '../shared/endpoints';
 
 export function useUsers() {
   return useQuery('users', async (): Promise<User[]> => {
-    const { data } = await axios.get('http://localhost:3000/users');
+    const { data } = await axios.get(usersUrl);
     return data;
   });
 }
@@ -29,7 +30,7 @@ export function Users() {
           ) : (
             <>
               {data?.map((user) => (
-                <div key={user.id} className="col-12">
+                <div key={user.id} className="col-12 mb-4">
                   <UserExcerpt user={user} />
                 </div>
               ))}
@@ -49,7 +50,7 @@ const deleteUserRequest = async (deleteReqParams: { uId: string }): Promise<void
   Object.entries(deleteReqParams).forEach(([key, val]) => {
     urlSearchParams.append(key, val);
   });
-  const targetUrl = `http://localhost:3000/users/one?`.concat(urlSearchParams.toString());
+  const targetUrl = `${usersUrl}/one?`.concat(urlSearchParams.toString());
   await axios.delete(targetUrl);
 };
 

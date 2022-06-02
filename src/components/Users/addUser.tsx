@@ -14,6 +14,7 @@ import axios from 'axios';
 import { User } from '../types';
 import { BeatLoader } from 'react-spinners';
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
+import { usersUrl } from '../shared/endpoints';
 
 export type CreateUserDto = {
   firstName: string;
@@ -23,7 +24,7 @@ export type CreateUserDto = {
 const maxFilesCountToUploadAtOnce = 10;
 
 const addUserPostRequest = async (addUserDtoFormData: FormData): Promise<User> => {
-  const { data } = await axios.post('http://localhost:3000/users', addUserDtoFormData);
+  const { data } = await axios.post(usersUrl, addUserDtoFormData);
   return data;
 };
 
