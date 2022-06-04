@@ -32,6 +32,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "start:https": "HTTPS=true SSL_CRT_FILE=localhost.pem SSL_KEY_FILE=localhost-key.pem npm start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
