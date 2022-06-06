@@ -6,17 +6,22 @@ import { CredentialResponse } from 'google-one-tap';
 import axios from 'axios';
 import { usersUrl } from '../../shared/endpoints';
 import { useMutation } from 'react-query';
+import { UserAndGoogleData } from './dtos';
 
 export type VerifyJwtTokenDto = {
   jwtGoogleToken: string;
 };
 const validateGoogleJwtToken = async (jwtTokenDto: VerifyJwtTokenDto) => {
-  await axios.post(`${usersUrl}/verify-google-jwt-token`, jwtTokenDto);
+  const result = await axios.post<UserAndGoogleData>(
+    `${usersUrl}/verify-google-jwt-token`,
+    jwtTokenDto,
+  );
+  return result.data;
 };
 
 //https://developers.google.com/identity/gsi/web/guides/display-button
 export function Auth() {
-  const googleClient = useGoogleClient();
+  const googleClientWithData = useGoogleClient();
 
   const verifyJwtGoogleMutation = useMutation(validateGoogleJwtToken, {
     onSuccess: () => {
@@ -25,20 +30,18 @@ export function Auth() {
     },
   });
 
-  const handleCredentialResponse = async (response: CredentialResponse) => {
-    //https://developers.google.com/identity/gsi/web/guides/handle-credential-responses-js-functions
+  const handleCredentialResponse = React.useCallback(
+    async (response: CredentialResponse) => {
+      console.log('Encoded JWT ID token: ' + response.credential);
 
-    //https://developers.google.com/identity/gsi/web/guides/handle-credential-responses-js-functions
-    // decodeJwtResponse() is a custom function defined by you
-    // to decode the credential response.
-    //https://jwt.io/
+      const result = await verifyJwtGoogleMutation.mutateAsync({
+        jwtGoogleToken: response.credential,
+      });
 
-    console.log('Encoded JWT ID token: ' + response.credential);
-
-    await verifyJwtGoogleMutation.mutateAsync({
-      jwtGoogleToken: response.credential,
-    });
-  };
+      console.log('result ', result);
+    },
+    [verifyJwtGoogleMutation],
+  );
 
   const handleNativeCallback = (response: any) => {
     //not invoked
@@ -47,13 +50,13 @@ export function Auth() {
 
   //https://developers.google.com/identity/gsi/web/reference/js-reference
   const renderButtonCallback = React.useCallback(() => {
-    if (googleClient.gcd.isInitialized) {
-      googleClient.gcd.google.accounts.id.renderButton(
+    if (googleClientWithData.googleClient.gcd.isInitialized) {
+      googleClientWithData.googleClient.gcd.google.accounts.id.renderButton(
         document.getElementById('buttonAccountLoginGoogle')!,
         { theme: 'outline', size: 'large' },
       );
     }
-  }, [googleClient]);
+  }, [googleClientWithData]);
 
   React.useLayoutEffect(() => {
     renderButtonCallback();
@@ -61,14 +64,14 @@ export function Auth() {
 
   React.useLayoutEffect(() => {
     const onWindowLoadHandler = () => {
-      googleClient.initGoogleAccountId({
+      googleClientWithData.googleClient.initGoogleAccountId({
         callback: handleCredentialResponse,
         native_callback: handleNativeCallback,
       });
 
       renderButtonCallback();
 
-      googleClient.gcd.google.accounts.id.prompt();
+      googleClientWithData.googleClient.gcd.google.accounts.id.prompt();
     };
 
     window.addEventListener('load', onWindowLoadHandler);
@@ -76,7 +79,7 @@ export function Auth() {
     return () => {
       window.removeEventListener('load', onWindowLoadHandler);
     };
-  }, [googleClient, renderButtonCallback]);
+  }, [googleClientWithData, renderButtonCallback, handleCredentialResponse]);
 
   //TODO: disable auto sign in on user sign out
   // const button = document.getElementById(‘signout_button’);

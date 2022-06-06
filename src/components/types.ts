@@ -6,6 +6,7 @@ export type User = {
   createdAt: string;
   updatedAt: string;
   photos?: PublicFile[];
+  email: string;
 };
 
 export type PublicFile = {
@@ -20,4 +21,8 @@ export type PublicFile = {
   createdAt: string;
   updatedAt: string;
   expiredUrl: string;
+};
+
+export type GenericDataNorm<TData> = {
+  [key: string]: TData;
 };

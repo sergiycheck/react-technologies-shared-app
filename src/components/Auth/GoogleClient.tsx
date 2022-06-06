@@ -1,5 +1,6 @@
 import React from 'react';
 import { CredentialResponse } from 'google-one-tap';
+import { UserAndGoogleData } from './custom_components/dtos';
 
 declare global {
   interface Window {
@@ -46,7 +47,12 @@ export class GoogleClient {
   }
 }
 
-export const GoogleClientContext = React.createContext<GoogleClient>(null!);
+export const GoogleClientContext = React.createContext<{
+  googleClient: GoogleClient;
+  currentUser: UserAndGoogleData | null;
+  signin: (user: UserAndGoogleData, callback: VoidFunction) => void;
+  signout: (callback: VoidFunction) => void;
+}>(null!);
 
 export const useGoogleClient = () => {
   const googleClient = React.useContext(GoogleClientContext);
@@ -60,5 +66,19 @@ export function GoogleClientContextProvider({
   client: GoogleClient;
   children: React.ReactNode;
 }) {
-  return <GoogleClientContext.Provider value={client}>{children}</GoogleClientContext.Provider>;
+  const [currentUser, setCurrentUser] = React.useState<UserAndGoogleData | null>(null);
+
+  const signin = (user: UserAndGoogleData, callback: VoidFunction) => {
+    return;
+  };
+
+  const passedValue = {
+    googleClient: client,
+    currentUser,
+    setCurrentUser,
+  };
+
+  return (
+    <GoogleClientContext.Provider value={passedValue}>{children}</GoogleClientContext.Provider>
+  );
 }

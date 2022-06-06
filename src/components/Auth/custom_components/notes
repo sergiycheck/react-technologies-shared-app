@@ -3,3 +3,10 @@ because it is not a server side environment
 and these is no child_process here.
 
 you can only use client-side outdated code
+
+//https://developers.google.com/identity/gsi/web/guides/handle-credential-responses-js-functions
+
+//https://developers.google.com/identity/gsi/web/guides/handle-credential-responses-js-functions
+// decodeJwtResponse() is a custom function defined by you
+// to decode the credential response.
+//https://jwt.io/
