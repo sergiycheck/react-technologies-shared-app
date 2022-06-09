@@ -1,5 +1,5 @@
 import React from 'react';
-import { CredentialResponse } from 'google-one-tap';
+import { CredentialResponse, PromptMomentNotification } from 'google-one-tap';
 import { UserAndGoogleData } from './custom_components/dtos';
 import { useMutation } from 'react-query';
 import axios from 'axios';

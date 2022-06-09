@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from '@chakra-ui/react';
+import { List, ListItem, Text } from '@chakra-ui/react';
 import { useGoogleWithUserClient } from '../GoogleClient';
 import LoginButton from './Login';
 import { CredentialResponse } from 'google-one-tap';
@@ -8,6 +8,7 @@ import { usersUrl } from '../../shared/endpoints';
 import { useMutation } from 'react-query';
 import { UserAndGoogleData } from './dtos';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { SettingsIcon } from '@chakra-ui/icons';
 
 export type VerifyJwtTokenDto = {
   jwtGoogleToken: string;
@@ -25,6 +26,9 @@ export type StateOfLocationType = Location & { from: Location };
 //https://developers.google.com/identity/gsi/web/guides/display-button
 export function Auth() {
   const googleClientWithData = useGoogleWithUserClient();
+
+  /*TODO: only for debug and learning reasons*/
+  const [debugMessages, setDebugMessages] = React.useState<string[] | undefined>(undefined);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,7 +74,19 @@ export function Auth() {
       callback: handleCredentialResponse,
     });
     renderButtonCallback();
-    googleClientWithData.googleClient.gcd.google.accounts.id.prompt();
+
+    googleClientWithData.googleClient.gcd.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        /*TODO: only for debug and learning reasons*/
+        setDebugMessages((prevMessages) => {
+          let elem = Object.entries(notification).reduce((prev, [key, val]) => {
+            return prev.concat(`key ${key}, val ${val}`);
+          }, '');
+          const result = prevMessages ? [...prevMessages, elem] : [elem];
+          return result;
+        });
+      }
+    });
   }, [googleClientWithData, renderButtonCallback, handleCredentialResponse]);
 
   React.useEffect(() => {
@@ -87,8 +103,6 @@ export function Auth() {
 
   React.useLayoutEffect(() => {
     const onWindowLoadHandler = () => {
-      console.log('onload handlers from userLayoutEffect onWindowLoadHandler');
-
       initGoogleAccountRenderButtonLoginCallback();
     };
 
@@ -109,6 +123,17 @@ export function Auth() {
           {/* https://developers.google.com/identity/gsi/web/reference/html-reference#element_with_class_g_id_signin */}
           <div id="buttonAccountLoginGoogle"></div>
         </div>
+      </div>
+
+      {/*TODO: only for debug and learning reasons*/}
+      <div className="row mt-5">
+        <List spacing={3}>
+          {debugMessages?.map((msg, i) => (
+            <ListItem key={i}>
+              <SettingsIcon /> {msg}
+            </ListItem>
+          ))}
+        </List>
       </div>
     </div>
   );

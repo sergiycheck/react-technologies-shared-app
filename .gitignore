@@ -24,3 +24,4 @@ yarn-error.log*
 google_client_secret.json
 localhost-key.pem
 localhost.pem
+.env
