@@ -1,12 +1,13 @@
 import React from 'react';
 import { Text } from '@chakra-ui/react';
-import { useGoogleClient } from '../GoogleClient';
+import { useGoogleWithUserClient } from '../GoogleClient';
 import LoginButton from './Login';
 import { CredentialResponse } from 'google-one-tap';
 import axios from 'axios';
 import { usersUrl } from '../../shared/endpoints';
 import { useMutation } from 'react-query';
 import { UserAndGoogleData } from './dtos';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export type VerifyJwtTokenDto = {
   jwtGoogleToken: string;
@@ -19,14 +20,23 @@ const validateGoogleJwtToken = async (jwtTokenDto: VerifyJwtTokenDto) => {
   return result.data;
 };
 
+export type StateOfLocationType = Location & { from: Location };
+
 //https://developers.google.com/identity/gsi/web/guides/display-button
 export function Auth() {
-  const googleClientWithData = useGoogleClient();
+  const googleClientWithData = useGoogleWithUserClient();
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const stateOfLocation = location.state as StateOfLocationType;
+  const from = stateOfLocation?.from?.pathname || '/';
 
   const verifyJwtGoogleMutation = useMutation(validateGoogleJwtToken, {
-    onSuccess: () => {
+    onSuccess: (userData) => {
       //invalidate tags
-      console.log('jwt google invalidation success');
+      googleClientWithData.setCurrentUser(userData);
+      navigate(from, { replace: true });
     },
   });
 
@@ -34,19 +44,12 @@ export function Auth() {
     async (response: CredentialResponse) => {
       console.log('Encoded JWT ID token: ' + response.credential);
 
-      const result = await verifyJwtGoogleMutation.mutateAsync({
+      await verifyJwtGoogleMutation.mutateAsync({
         jwtGoogleToken: response.credential,
       });
-
-      console.log('result ', result);
     },
     [verifyJwtGoogleMutation],
   );
-
-  const handleNativeCallback = (response: any) => {
-    //not invoked
-    console.log('Password credential', response);
-  };
 
   //https://developers.google.com/identity/gsi/web/reference/js-reference
   const renderButtonCallback = React.useCallback(() => {
@@ -62,30 +65,38 @@ export function Auth() {
     renderButtonCallback();
   }, [renderButtonCallback]);
 
+  const initGoogleAccountRenderButtonLoginCallback = React.useCallback(() => {
+    googleClientWithData.googleClient.initGoogleAccountId({
+      callback: handleCredentialResponse,
+    });
+    renderButtonCallback();
+    googleClientWithData.googleClient.gcd.google.accounts.id.prompt();
+  }, [googleClientWithData, renderButtonCallback, handleCredentialResponse]);
+
+  React.useEffect(() => {
+    function initializeGoogleDataRenderComponentsIfPageWasLoaded() {
+      initGoogleAccountRenderButtonLoginCallback();
+    }
+
+    const docIsLoaded = !!googleClientWithData.isDocLoaded;
+    const googleClientWasNotInitialized = !googleClientWithData.googleClient.gcd.isInitialized;
+    if (docIsLoaded && googleClientWasNotInitialized) {
+      initializeGoogleDataRenderComponentsIfPageWasLoaded();
+    }
+  }, [googleClientWithData, initGoogleAccountRenderButtonLoginCallback]);
+
   React.useLayoutEffect(() => {
     const onWindowLoadHandler = () => {
-      googleClientWithData.googleClient.initGoogleAccountId({
-        callback: handleCredentialResponse,
-        native_callback: handleNativeCallback,
-      });
+      console.log('onload handlers from userLayoutEffect onWindowLoadHandler');
 
-      renderButtonCallback();
-
-      googleClientWithData.googleClient.gcd.google.accounts.id.prompt();
+      initGoogleAccountRenderButtonLoginCallback();
     };
 
     window.addEventListener('load', onWindowLoadHandler);
-
     return () => {
       window.removeEventListener('load', onWindowLoadHandler);
     };
-  }, [googleClientWithData, renderButtonCallback, handleCredentialResponse]);
-
-  //TODO: disable auto sign in on user sign out
-  // const button = document.getElementById(‘signout_button’);
-  // button.onclick = () => {
-  //   google.accounts.id.disableAutoSelect();
-  // }
+  }, [initGoogleAccountRenderButtonLoginCallback]);
 
   return (
     <div className="container">
