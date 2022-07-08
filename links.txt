@@ -22,3 +22,6 @@ https://console.cloud.google.com/apis/credentials?project=nestjs-users-photos-ma
 
 //sing in with google guides
 https://developers.google.com/identity/gsi/web/guides/overview
+
+//revoke not fully clear for me, finished here 
+https://developers.google.com/identity/gsi/web/guides/revoke
