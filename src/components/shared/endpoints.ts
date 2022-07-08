@@ -1,2 +1,2 @@
-export const baseProxyUrl = 'http://localhost:3030/v1';
+export const baseProxyUrl = 'https://localhost:3048/v1';
 export const usersUrl = `${baseProxyUrl}/users`;

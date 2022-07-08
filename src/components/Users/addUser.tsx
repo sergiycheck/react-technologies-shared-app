@@ -1,5 +1,5 @@
 import React from 'react';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, useFormikContext } from 'formik';
 import {
   Box,
   Button,
@@ -15,10 +15,12 @@ import { User } from '../types';
 import { BeatLoader } from 'react-spinners';
 import { AddIcon, CloseIcon } from '@chakra-ui/icons';
 import { usersUrl } from '../shared/endpoints';
+import { useGoogleWithUserClient } from '../Auth/GoogleClient';
 
 export type CreateUserDto = {
   firstName: string;
   lastName: string;
+  email: string;
   [`file[]`]?: any;
 };
 const maxFilesCountToUploadAtOnce = 10;
@@ -29,7 +31,12 @@ const addUserPostRequest = async (addUserDtoFormData: FormData): Promise<User> =
 };
 
 const AddUser = () => {
-  const initialVals: CreateUserDto = { firstName: '', lastName: '' };
+  const initialVals: CreateUserDto = {
+    firstName: '',
+    lastName: '',
+    email: '',
+  };
+
   const [selectedFiles, setSelectedFiles] = React.useState<File[] | null>();
   const inputFileRef = React.useRef<HTMLInputElement>(null);
 
@@ -64,6 +71,9 @@ const AddUser = () => {
           if (!values.lastName) {
             errors.lastName = 'Required';
           }
+          if (!values.email || !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(values.email)) {
+            errors.email = 'Required';
+          }
           return errors;
         }}
         onSubmit={async (values, helpers) => {
@@ -83,25 +93,43 @@ const AddUser = () => {
       >
         {(props) => (
           <Form className="row">
-            <Field className="col-12" type="text" name="firstName">
-              {({ field, form }: any) => (
-                <FormControl isInvalid={form.errors.firstName && form.touched.firstName}>
-                  <FormLabel htmlFor="firstName">First name</FormLabel>
-                  <Input {...field} id="firstName" />
-                  <FormErrorMessage>{form.errors.firstName}</FormErrorMessage>
-                </FormControl>
-              )}
-            </Field>
+            <React.Fragment>
+              <Field className="col-12" type="text" name="firstName">
+                {({ field, form }: any) => (
+                  <FormControl isInvalid={form.errors.firstName && form.touched.firstName}>
+                    <FormLabel htmlFor="firstName">First name</FormLabel>
+                    <Input {...field} id="firstName" />
+                    <FormErrorMessage>{form.errors.firstName}</FormErrorMessage>
+                  </FormControl>
+                )}
+              </Field>
+              <Field className="col-12" type="text" name="lastName">
+                {({ field, form }: any) => (
+                  <FormControl isInvalid={form.errors.lastName && form.touched.lastName}>
+                    <FormLabel htmlFor="lastName">Last name</FormLabel>
+                    <Input {...field} id="lastName" />
+                    <FormErrorMessage>{form.errors.lastName}</FormErrorMessage>
+                  </FormControl>
+                )}
+              </Field>
+              <Field className="col-12" type="text" name="email">
+                {({ field, form }: any) => (
+                  <FormControl isInvalid={form.errors.email && form.touched.email}>
+                    <FormLabel htmlFor="email">Email</FormLabel>
+                    <Input {...field} id="email" />
+                    <FormErrorMessage>{form.errors.email}</FormErrorMessage>
+                  </FormControl>
+                )}
+              </Field>
+            </React.Fragment>
 
-            <Field className="col-12" type="text" name="lastName">
-              {({ field, form }: any) => (
-                <FormControl isInvalid={form.errors.lastName && form.touched.lastName}>
-                  <FormLabel htmlFor="lastName">Last name</FormLabel>
-                  <Input {...field} id="lastName" />
-                  <FormErrorMessage>{form.errors.lastName}</FormErrorMessage>
-                </FormControl>
-              )}
-            </Field>
+            <div className="col-12">
+              <div className="row">
+                <div className="col-auto">
+                  <FullFillUserInputs initialVals={initialVals} />
+                </div>
+              </div>
+            </div>
 
             <div className="col-12">
               <FormControl>
@@ -161,7 +189,6 @@ const AddUser = () => {
                 />
               </FormControl>
             </div>
-
             <div className="col-12 mt-2">
               <div className="row">
                 {selectedFiles &&
@@ -177,7 +204,6 @@ const AddUser = () => {
                   })}
               </div>
             </div>
-
             <div className="col-12 mt-2">
               <div className="row">
                 <div className="col-auto ms-auto">
@@ -256,5 +282,32 @@ export const PhotoPreviewExcerpt = ({
     </Box>
   );
 };
+
+export function FullFillUserInputs({ initialVals }: { initialVals: CreateUserDto }) {
+  const googleClientWithData = useGoogleWithUserClient();
+  const user = googleClientWithData?.currentUser as any;
+  const isAuth = !!user;
+
+  const { setFieldValue } = useFormikContext();
+
+  return isAuth ? (
+    <div className="col-12">
+      <Button
+        className="my-4"
+        colorScheme="cyan"
+        onClick={(e) => {
+          e.preventDefault();
+
+          Object.keys(initialVals).forEach((key) => {
+            const value = user[key];
+            setFieldValue(key, value, true);
+          });
+        }}
+      >
+        Fullfil with current userData
+      </Button>
+    </div>
+  ) : null;
+}
 
 export default AddUser;
